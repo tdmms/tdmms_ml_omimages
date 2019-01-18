@@ -1,0 +1,651 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hdevelop file_version="1.2" halcon_version="13.0.2.2">
+<procedure name="main">
+<interface/>
+<body>
+<c>* Activate graphic processing unit</c>
+<l>query_available_compute_devices (DeviceIdentifier)</l>
+<l>for Index := 0 to |DeviceIdentifier| - 1 by 1</l>
+<l>    get_compute_device_info (DeviceIdentifier[Index], 'name', DeviceName)</l>
+<l>    get_compute_device_info (DeviceIdentifier[Index], 'vendor', DeviceVendor)</l>
+<l>    Message[Index] := 'Device #' + Index + ': ' + DeviceVendor + ' ' + DeviceName</l>
+<l>endfor</l>
+<c></c>
+<l>DeviceIndex:=0</l>
+<l>open_compute_device (DeviceIdentifier[DeviceIndex], DeviceHandle)</l>
+<l>set_compute_device_param (DeviceHandle, 'asynchronous_execution', 'false')</l>
+<l>init_compute_device (DeviceHandle, 'all')</l>
+<l>activate_compute_device (DeviceHandle)</l>
+<c></c>
+<l>dev_close_window()</l>
+<l>dev_update_off()</l>
+<c></c>
+<c>*Obtain list of files</c>
+<l>p_input_directory := '/mnt/nas/2017-11-13-00110_Graphene_85nm_ALL/'</l>
+<c></c>
+<l>list_files(p_input_directory, 'directories', dirs)</l>
+<c></c>
+<c>*Read Background Image</c>
+<l>list_files(dirs[0],'files', filesInFirstFolder)</l>
+<l>tuple_regexp_select(filesInFirstFolder, 'a_', FilesToAnalyse)</l>
+<c></c>
+<c>**Preview Images for BG</c>
+<l>*    for Index:= 1 to |FilesToAnalyse| by 1</l>
+<l>*        read_image (Image, FilesToAnalyse[Index])</l>
+<l>*        bit_rshift(Image, ImageRshift, 4)</l>
+<l>*        convert_image_type (ImageRshift, ImageConverted, 'byte')</l>
+<l>*        dev_display(ImageConverted)</l>
+<l>*        dev_disp_text (Index, 'window', 'top', 'left', 'black', [], [])</l>
+<l>*        stop()</l>
+<l>*    endfor</l>
+<c></c>
+<c>*Extract Background Image</c>
+<c>* Index:=15 *For 2017-10-08_Graphene_ALL</c>
+<c>* Index:=282 *For 2017-11-13-00110_Graphene_85nm_All</c>
+<c>* Index:= 838 * For 2018-01-23-00157_Graphene_200nm_ALL</c>
+<c>* Index:= 97 * For 2017-06-14_MoS2_All</c>
+<c></c>
+<l>p_bgIndex:=97</l>
+<l>read_image(ImageBG, FilesToAnalyse[p_bgIndex])</l>
+<l>gauss_filter(ImageBG, ImageBG, 5)</l>
+<l>gauss_filter(ImageBG, ImageBG, 5)</l>
+<l>gauss_filter(ImageBG, ImageBG, 5)</l>
+<l>gauss_filter(ImageBG, ImageBG, 5)</l>
+<l>gauss_filter(ImageBG, ImageBG, 5)</l>
+<l>gauss_filter(ImageBG, ImageBG, 5)</l>
+<l>gauss_filter(ImageBG, ImageBG, 5)</l>
+<l>gauss_filter(ImageBG, ImageBG, 5)</l>
+<l>gauss_filter(ImageBG, ImageBG, 5)</l>
+<c></c>
+<c>* Parameter Settings</c>
+<c></c>
+<c>* Parameters for 290 and 85 nm</c>
+<l>* p_startIndex          := 762</l>
+<l>* p_delay               := 0</l>
+<l>* p_dilation            := 3</l>
+<l>* p_erosion             := 3</l>
+<l>* p_bilateral_spatial   := 3</l>
+<l>* p_bilateral_range     := 20</l>
+<l>* p_canny_alpha         := 4</l>
+<l>* p_canny_low           := 30</l>
+<l>* p_canny_high          := 60</l>
+<l>* p_area_cutoff         := 1</l>
+<l>* p_close_edges_min_amp := 1</l>
+<l>* p_close_edges_max_gap := 10</l>
+<c></c>
+<c>* Parameters for 200 nm</c>
+<l>p_startIndex               := [0, 0, 0]</l>
+<l>p_delay                    := [0, 0, 0]</l>
+<l>p_dilation                 := [3, 2, 2]</l>
+<l>p_erosion                  := [1, 2, 1]</l>
+<l>p_bilateral_spatial        := [3, 3, 3]</l>
+<l>p_bilateral_range          := [20, 20, 20]</l>
+<l>p_canny_alpha              := [4, 4, 4]</l>
+<l>p_canny_low                := [30, 30, 20]</l>
+<l>p_canny_high               := [60, 60, 60]</l>
+<l>p_area_cutoff              := [1, 1, 1]</l>
+<l>p_close_edges_min_amp      := [1, 1, 1]</l>
+<l>p_close_edges_max_gap      := [10, 10, 5]</l>
+<l>p_output_directory         := ['~/projects/ImageProcessing/out/2017-11-13-00110_Graphene_85nm_ALL/',\
+                               '~/projects/ImageProcessing/out/2017-11-13-00110_Graphene_85nm_ALL/',\
+                               '~/projects/ImageProcessing/out/2017-11-13-00110_Graphene_85nm_ALL/']</l>
+<l>p_conduct_erosion_dilation := [true, true, true]</l>
+<l>p_displayResults           := [false, false, false]</l>
+<c></c>
+<l>NumThreads:=1</l>
+<l>for paramIndex := 0 to |p_output_directory| -1 by 1</l>
+<l>    file_exists (p_output_directory[paramIndex], FileExists)</l>
+<l>    if (FileExists)</l>
+<l>    else</l>
+<l>        make_dir (p_output_directory[paramIndex])    </l>
+<l>    endif</l>
+<l>endfor</l>
+<c></c>
+<c>** Perform Parallel computing</c>
+<l>for paramIndex := 0 to |p_startIndex| -1 by 1</l>
+<l>    for dirIndex := 0 to |dirs|-1 by NumThreads</l>
+<c>        * Kill finished threads</c>
+<l>        ThreadIDs := {}</l>
+<l>        Threads := []</l>
+<l>        for Index:=0 to min([NumThreads-1,(|dirs|-dirIndex)-1]) by 1</l>
+<l>            par_start&lt;ThreadIDs.at(Index)&gt; : analyseImagesInDir (ImageBG, dirs[dirIndex+Index],\
+            p_output_directory[paramIndex], p_displayResults[paramIndex], p_startIndex[paramIndex], \
+            p_delay[paramIndex], p_dilation[paramIndex], p_erosion[paramIndex], \
+            p_bilateral_spatial[paramIndex], p_bilateral_range[paramIndex], p_canny_alpha[paramIndex],\
+            p_canny_low[paramIndex], p_canny_high[paramIndex], \
+            p_area_cutoff[paramIndex], p_conduct_erosion_dilation[paramIndex], p_close_edges_min_amp[paramIndex],\
+            p_close_edges_max_gap[paramIndex])</l>
+<l>        endfor</l>
+<c>        *Wait for all parallel process to end</c>
+<l>        convert_vector_to_tuple (ThreadIDs, Threads)</l>
+<l>        par_join(Threads)</l>
+<l>    endfor</l>
+<c>    </c>
+<l>endfor</l>
+<c>* Kill finished threads</c>
+<l>ThreadIDs := {}</l>
+<l>Threads := []</l>
+<c></c>
+<l>deactivate_compute_device (DeviceHandle)</l>
+</body>
+<docu id="main">
+<parameters/>
+</docu>
+</procedure>
+<procedure name="analyseImagesInDir">
+<interface>
+<io>
+<par name="ImageBG" base_type="iconic" dimension="0"/>
+</io>
+<ic>
+<par name="p_inputDirectory" base_type="ctrl" dimension="0"/>
+<par name="p_outputDirectory" base_type="ctrl" dimension="0"/>
+<par name="p_displayResults" base_type="ctrl" dimension="0"/>
+<par name="p_startIndex" base_type="ctrl" dimension="0"/>
+<par name="p_delay" base_type="ctrl" dimension="0"/>
+<par name="p_dilation" base_type="ctrl" dimension="0"/>
+<par name="p_erosion" base_type="ctrl" dimension="0"/>
+<par name="p_bilateral_spatial" base_type="ctrl" dimension="0"/>
+<par name="p_bilateral_range" base_type="ctrl" dimension="0"/>
+<par name="p_canny_alpha" base_type="ctrl" dimension="0"/>
+<par name="p_canny_low" base_type="ctrl" dimension="0"/>
+<par name="p_canny_high" base_type="ctrl" dimension="0"/>
+<par name="p_area_cutoff" base_type="ctrl" dimension="0"/>
+<par name="p_conduct_erosion_dilation" base_type="ctrl" dimension="0"/>
+<par name="p_close_edges_min_amp" base_type="ctrl" dimension="0"/>
+<par name="p_close_edges_max_gap" base_type="ctrl" dimension="0"/>
+</ic>
+</interface>
+<body>
+<c>** History</c>
+<c>* 2018/01/25 </c>
+<c></c>
+<l>list_files (p_inputDirectory, 'files', Files)</l>
+<l>tuple_regexp_select (Files, 'a_.*tiff', FilesToAnalyse)</l>
+<l>NumFiles := |FilesToAnalyse|</l>
+<l>tuple_strlen (p_inputDirectory, Length)</l>
+<l>tuple_substr (p_inputDirectory, Length-3, Length-2, chipno)</l>
+<c></c>
+<c>*get image size</c>
+<l>read_image(Image, FilesToAnalyse[1])</l>
+<l>get_image_size (Image, Width, Height)</l>
+<c></c>
+<c>*Create_Window</c>
+<l>scalefactor := 1.5</l>
+<l>dev_open_window(0,0,Width/scalefactor,Height/scalefactor,'black',WindowHandle)</l>
+<l>dev_open_window(Height/scalefactor, 0, Width/scalefactor, Height/scalefactor, 'black', WindowHandle_reg)</l>
+<c></c>
+<c>*Preview Imge</c>
+<l>* p_startIndex:=152</l>
+<l>* for Index:=p_startIndex to Length-1 by 1</l>
+<l>*     read_image (Image, FilesToAnalyse[Index])</l>
+<l>*     bilateral_filter (Image, Image, ImageBilateral, 3, 20, [], [])</l>
+<l>*     bit_rshift(ImageBilateral, ImageRshift, 4)</l>
+<l>*     convert_image_type (ImageRshift, ImageConverted, 'byte')</l>
+<c></c>
+<l>*     dev_set_window(WindowHandle)</l>
+<l>*     dev_clear_window()</l>
+<l>*     dev_display(ImageConverted)</l>
+<l>*     dev_disp_text (Index, 'window', 'top', 'left', 'black', [], [])</l>
+<l>*     stop()</l>
+<l>* endfor</l>
+<c></c>
+<c></c>
+<c>*Write parameters</c>
+<l>open_file(p_outputDirectory + chipno + '.prm', 'output', FileHandle)</l>
+<l>fwrite_string(FileHandle,['p_inputDirectory: ',           p_inputDirectory, '\n'])</l>
+<l>fwrite_string(FileHandle,['p_startIndex: ',               p_startIndex, '\n'])</l>
+<l>fwrite_string(FileHandle,['p_delay: ',                    p_delay, '\n'])</l>
+<l>fwrite_string(FileHandle,['p_dilation: ',                 p_dilation, '\n'])</l>
+<l>fwrite_string(FileHandle,['p_erosion: ',                  p_erosion, '\n'])</l>
+<l>fwrite_string(FileHandle,['p_bilateral_spatial: ',        p_bilateral_spatial, '\n'])</l>
+<l>fwrite_string(FileHandle,['p_bilaterl_range: ',           p_bilateral_range, '\n'])</l>
+<l>fwrite_string(FileHandle,['p_canny_alpha: ',              p_canny_alpha, '\n'])</l>
+<l>fwrite_string(FileHandle,['p_canny_low: ',                p_canny_low, '\n'])</l>
+<l>fwrite_string(FileHandle,['p_canny_high: ',               p_canny_high, '\n'])</l>
+<l>fwrite_string(FileHandle,['p_area_cutoff: ',              p_area_cutoff, '\n'])</l>
+<l>fwrite_string(FileHandle,['p_conduct_erosion_dilation: ', p_conduct_erosion_dilation, '\n'])</l>
+<l>fwrite_string(FileHandle,['p_close_edges_min_amp: ',      p_close_edges_min_amp, '\n'])</l>
+<l>fwrite_string(FileHandle,['p_close_edges_max_gap: ',      p_close_edges_max_gap, '\n'])</l>
+<l>close_file (FileHandle)</l>
+<c></c>
+<c></c>
+<c>*Open File Handles</c>
+<l>open_file(p_outputDirectory + chipno + '_' + 'anisometry.txt'    ,'append', FileHandle_anisometry)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'area.txt'          ,'append', FileHandle_area)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'area_holes.txt'    ,'append', FileHandle_area_holes)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'bulkiness.txt'     ,'append', FileHandle_bulkiness)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'circularity.txt'   ,'append', FileHandle_circularity)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'column.txt'        ,'append', FileHandle_column)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'column1.txt'       ,'append', FileHandle_column1)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'column2.txt'       ,'append', FileHandle_column2)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'compactness.txt'   ,'append', FileHandle_compactness)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'connect_num.txt'   ,'append', FileHandle_connect_num)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'contlength.txt'    ,'append', FileHandle_contlength)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'convexity.txt'     ,'append', FileHandle_convexity)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'dist_deviation.txt','append', FileHandle_dist_deviation)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'dist_mean.txt'     ,'append', FileHandle_dist_mean)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'euler_number.txt'  ,'append', FileHandle_euler_number)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'height.txt'        ,'append', FileHandle_height)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'holes_num.txt'     ,'append', FileHandle_holes_num)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'inner_height.txt'  ,'append', FileHandle_inner_height)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'inner_radius.txt'  ,'append', FileHandle_inner_radius)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'inner_width.txt'   ,'append', FileHandle_inner_width)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'max_diameter.txt'  ,'append', FileHandle_max_diameter)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'num_sides.txt'     ,'append', FileHandle_num_sides)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'orientation.txt'   ,'append', FileHandle_orientation)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'outer_radius.txt'  ,'append', FileHandle_outer_radius) </l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'phi.txt'           ,'append', FileHandle_phi)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'ra.txt'            ,'append', FileHandle_ra)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'rb.txt'            ,'append', FileHandle_rb) </l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'rect2_len1.txt'    ,'append', FileHandle_rect2_len1)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'rect2_len2.txt'    ,'append', FileHandle_rect2_len2)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'rect2_phi.txt'     ,'append', FileHandle_rect2_phi)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'rectangularity.txt','append', FileHandle_rectangularity)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'roundness.txt'     ,'append', FileHandle_roundness)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'row.txt'           ,'append', FileHandle_row)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'row1.txt'          ,'append', FileHandle_row1) </l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'row2.txt'          ,'append', FileHandle_row2)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'struct_factor.txt' ,'append', FileHandle_struct_factor)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'width.txt'         ,'append', FileHandle_width)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'bg_mean_h.txt'     ,'append', FileHandle_bg_mean_h)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'bg_mean_s.txt'     ,'append', FileHandle_bg_mean_s)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'bg_mean_v.txt'     ,'append', FileHandle_bg_mean_v)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'bg_mean_g.txt'     ,'append', FileHandle_bg_mean_g)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'bg_median_h.txt'   ,'append', FileHandle_bg_median_h)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'bg_median_s.txt'   ,'append', FileHandle_bg_median_s)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'bg_median_v.txt'   ,'append', FileHandle_bg_median_v)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'bg_median_g.txt'   ,'append', FileHandle_bg_median_g)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'mean_h.txt'        ,'append', FileHandle_mean_h)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'mean_s.txt'        ,'append', FileHandle_mean_s)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'mean_v.txt'        ,'append', FileHandle_mean_v)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'mean_g.txt'        ,'append', FileHandle_mean_g)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'median_h.txt'      ,'append', FileHandle_median_h)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'median_s.txt'      ,'append', FileHandle_median_s)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'median_v.txt'      ,'append', FileHandle_median_v)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'median_g.txt'      ,'append', FileHandle_median_g)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'entropy_g.txt'     ,'append', FileHandle_entropy_g)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'anisotropy_g.txt'  ,'append', FileHandle_anisotropy_g)</l>
+<l>open_file(p_outputDirectory + chipno + '_' + 'filename.txt'      ,'append', FileHandle_filename)</l>
+<c></c>
+<c>* Iterate Listed Files</c>
+<l>get_system_time(st_msec, st_sec, st_min, st_hr, st_day, st_yday, st_mont, st_year)</l>
+<l>st_time := st_msec * 1E-3 + st_sec + st_min*60 + st_hr*60*60 + st_yday*60*60*24</l>
+<l>for Index:=p_startIndex to NumFiles-1 by 1</l>
+<c>    * Read image and conduct preprocessing</c>
+<l>    read_image (Image, FilesToAnalyse[Index])</l>
+<l>    bilateral_filter (Image, Image, ImageBilateral, p_bilateral_spatial, p_bilateral_range, [], [])</l>
+<c>    </c>
+<c>    *display microsocpe image</c>
+<l>    if(p_displayResults)</l>
+<l>        bit_rshift(ImageBilateral, ImageRshift, 4)</l>
+<l>        convert_image_type (ImageRshift, ImageConverted, 'byte')</l>
+<l>        dev_set_window(WindowHandle)</l>
+<l>        dev_clear_window()</l>
+<l>        dev_display(ImageConverted)          </l>
+<l>    endif</l>
+<c> </c>
+<l>    edges_image(ImageBilateral, ImaAm, ImaDir, 'canny', p_canny_alpha, 'nms', p_canny_low, p_canny_high)</l>
+<l>    threshold(ImaAm, Region, 1, pow(2,12) - 1)</l>
+<c>    </c>
+<c>    * This following process is needed to avoid the error that takes place </c>
+<c>    * when the Region were empty. </c>
+<l>    connection(Region, connectedRegions)</l>
+<l>    region_features(connectedRegions,'area', area)</l>
+<l>    if(|area| == 1)</l>
+<l>        RegionClosed:=Region</l>
+<l>    else</l>
+<l>        close_edges_length (Region, ImaAm, RegionClosed, p_close_edges_min_amp , p_close_edges_max_gap)</l>
+<l>    endif</l>
+<c>    </c>
+<l>    if (p_conduct_erosion_dilation)</l>
+<l>        dilation_circle(RegionClosed, RegionClosed, p_dilation)</l>
+<l>    endif</l>
+<l>    edgesRegion:= RegionClosed</l>
+<c>    </c>
+<c>    * close edges that intersect window edges</c>
+<l>    gen_region_line(RegionLine_top,0,0,0,Width)</l>
+<l>    gen_region_line(RegionLine_bottom, Height-1,0,Height-1,Width)</l>
+<l>    gen_region_line(RegionLine_left,0,0,Height,0)</l>
+<l>    gen_region_line(RegionLine_right, 0, Width-1, Height, Width-1)</l>
+<c> </c>
+<l>    if (p_conduct_erosion_dilation)</l>
+<l>        dilation_circle(RegionLine_top, RegionLine_top, p_dilation)</l>
+<l>        dilation_circle(RegionLine_bottom, RegionLine_bottom, p_dilation)</l>
+<l>        dilation_circle(RegionLine_left, RegionLine_left, p_dilation)</l>
+<l>        dilation_circle(RegionLine_right, RegionLine_right,p_dilation)</l>
+<l>    endif</l>
+<c>    </c>
+<l>    union2(RegionClosed, RegionLine_top, RegionClosed)</l>
+<l>    fill_up(RegionClosed, RegionClosed)</l>
+<l>    difference(RegionClosed, RegionLine_top, RegionClosed)</l>
+<c></c>
+<l>    union2(RegionClosed, RegionLine_bottom, RegionClosed)</l>
+<l>    fill_up(RegionClosed, RegionClosed)</l>
+<l>    difference(RegionClosed, RegionLine_bottom, RegionClosed)</l>
+<c>    </c>
+<l>    union2(RegionClosed, RegionLine_left, RegionClosed)</l>
+<l>    fill_up(RegionClosed, RegionClosed)</l>
+<l>    difference(RegionClosed, RegionLine_left, RegionClosed)</l>
+<c>    </c>
+<l>    union2(RegionClosed,RegionLine_right, RegionClosed)</l>
+<l>    fill_up(RegionClosed, RegionClosed)</l>
+<l>    difference(RegionClosed, RegionLine_right, RegionClosed)</l>
+<c>    </c>
+<l>    difference(RegionClosed, edgesRegion, RegionDifference)</l>
+<c>    </c>
+<l>    if (p_conduct_erosion_dilation)</l>
+<l>        erosion_circle(RegionDifference, RegionDifference, p_erosion)       </l>
+<l>    endif</l>
+<c>    </c>
+<l>    select_shape(RegionDifference, selectedRegion, 'area', 'and', p_area_cutoff, 'max')</l>
+<l>    connection(selectedRegion, connectedRegions)</l>
+<c>    </c>
+<c>    *display targeted regions</c>
+<l>    dev_set_window(WindowHandle_reg)</l>
+<l>    dev_clear_window()</l>
+<l>    if(p_displayResults)</l>
+<l>        zoom_region(connectedRegions, zoomedRegions, 1/scalefactor, 1/scalefactor)</l>
+<l>        dev_display(zoomedRegions)    </l>
+<l>    endif</l>
+<l>    dev_disp_text (Index, 'window', 12, 12, 'black', [], [])</l>
+<l>    dev_disp_text (|FilesToAnalyse|-1, 'window', 24, 12, 'black', [], [])</l>
+<l>    get_system_time(cr_msec, cr_sec, cr_min, cr_hr, cr_day, cr_yday, cr_mont, cr_year)</l>
+<l>    cr_time := cr_msec * 1E-3 + cr_sec + cr_min*60 + cr_hr*60*60 + cr_yday*60*60*24</l>
+<l>    if(Index!=0)</l>
+<l>        etc_sec := (cr_time -st_time) / Index * (NumFiles -Index) / 60</l>
+<l>        dev_disp_text(etc_sec, 'window', 36, 12, 'black', [], [])          </l>
+<l>    endif</l>
+<c>    </c>
+<c>    *Comment out the following line to process the algorithm stepwise</c>
+<l>*     stop()</l>
+<l>*     wait_seconds(p_delay)</l>
+<c>    ****Prepare Images to Analyse</c>
+<c>    * Prepare Grayscalse Image</c>
+<c>    </c>
+<c>    * Prepare Grayscale Image in Byte format </c>
+<c>    * This data is needed for calculating entorpy </c>
+<l>    rgb1_to_gray(Image,   ImageGray)</l>
+<l>    bit_rshift (ImageGray, ImageGrayShift, 4)</l>
+<l>    convert_image_type (ImageGrayShift, ImageGrayByte, 'byte')</l>
+<c>       </c>
+<c>    * Convert to HSV colorspace</c>
+<c>    * </c>
+<l>    convert_image_type (Image, ImageReal, 'real')</l>
+<l>    scale_image(ImageReal, ImageReal_sc, 1.0/pow(2,12), 0.0)</l>
+<l>    rgb1_to_gray(ImageReal_sc, ImageGray_sc)</l>
+<l>    decompose3(ImageReal_sc, ImageR, ImageG, ImageB)</l>
+<l>    trans_from_rgb(ImageR, ImageG, ImageB, ImageH, ImageS, ImageV, 'hsv')</l>
+<c>    </c>
+<l>    convert_image_type(ImageBG, ImageBGReal, 'real')</l>
+<l>    scale_image(ImageBGReal, ImageBGReal_sc, 1.0/pow(2,12), 0.0)</l>
+<l>    rgb1_to_gray(ImageBGReal_sc, ImageBGGray_sc)</l>
+<l>    decompose3(ImageBGReal_sc, ImageBGR, ImageBGG, ImageBGB)</l>
+<l>    trans_from_rgb(ImageBGR, ImageBGG, ImageBGB, ImageBGH, ImageBGS, ImageBGV, 'hsv')</l>
+<c>    </c>
+<c>    *Extract region features</c>
+<l>    region_features(connectedRegions,'anisometry', anisometry)</l>
+<l>    region_features(connectedRegions,'area', area)</l>
+<l>    region_features(connectedRegions,'area_holes', area_holes)</l>
+<l>    region_features(connectedRegions,'bulkiness', bulkiness)</l>
+<l>    region_features(connectedRegions,'circularity', circularity)</l>
+<l>    region_features(connectedRegions,'column', column)</l>
+<l>    region_features(connectedRegions,'column1', column1)</l>
+<l>    region_features(connectedRegions,'column2', column2)</l>
+<l>    region_features(connectedRegions,'compactness', compactness)</l>
+<l>    region_features(connectedRegions,'connect_num', connect_num)</l>
+<l>    region_features(connectedRegions,'contlength', contlength)</l>
+<l>    region_features(connectedRegions,'convexity', convexity)</l>
+<l>    region_features(connectedRegions,'dist_deviation', dist_deviation)</l>
+<l>    region_features(connectedRegions,'dist_mean', dist_mean)</l>
+<l>    region_features(connectedRegions,'euler_number', euler_number)</l>
+<l>    region_features(connectedRegions,'height', height)</l>
+<l>    region_features(connectedRegions,'holes_num', holes_num)</l>
+<l>    region_features(connectedRegions,'inner_height', inner_height)</l>
+<l>    region_features(connectedRegions,'inner_radius', inner_radius)</l>
+<l>    region_features(connectedRegions,'inner_width', inner_width)</l>
+<l>    region_features(connectedRegions,'max_diameter', max_diameter)</l>
+<l>    region_features(connectedRegions,'num_sides', num_sides)</l>
+<l>    region_features(connectedRegions,'orientation', orientation)</l>
+<l>    region_features(connectedRegions,'outer_radius', outer_radius)</l>
+<l>    region_features(connectedRegions,'phi', phi)</l>
+<l>    region_features(connectedRegions,'ra', ra)</l>
+<l>    region_features(connectedRegions,'rb', rb)</l>
+<l>    region_features(connectedRegions,'rect2_len1', rect2_len1)</l>
+<l>    region_features(connectedRegions,'rect2_len2', rect2_len2)</l>
+<l>    region_features(connectedRegions,'rect2_phi', rect2_phi)</l>
+<l>    region_features(connectedRegions,'rectangularity', rectangularity)</l>
+<l>    region_features(connectedRegions,'roundness', roundness)</l>
+<l>    region_features(connectedRegions,'row', row)</l>
+<l>    region_features(connectedRegions,'row1', row1)</l>
+<l>    region_features(connectedRegions,'row2', row2)</l>
+<l>    region_features(connectedRegions,'struct_factor', struct_factor)</l>
+<l>    region_features(connectedRegions,'width', width)</l>
+<c>   </c>
+<l>    gray_features (connectedRegions, ImageBGH, 'mean', bg_mean_h)</l>
+<l>    gray_features (connectedRegions, ImageBGS, 'mean', bg_mean_s)</l>
+<l>    gray_features (connectedRegions, ImageBGV, 'mean', bg_mean_v)</l>
+<l>    gray_features (connectedRegions, ImageBGGray_sc, 'mean', bg_mean_g)</l>
+<c>    </c>
+<l>    gray_features (connectedRegions, ImageBGH, 'median', bg_median_h)</l>
+<l>    gray_features (connectedRegions, ImageBGS, 'median', bg_median_s)</l>
+<l>    gray_features (connectedRegions, ImageBGV, 'median', bg_median_v)</l>
+<l>    gray_features (connectedRegions, ImageBGGray_sc, 'median', bg_median_g)</l>
+<c>    </c>
+<l>    gray_features (connectedRegions, ImageH, 'mean', mean_h)</l>
+<l>    gray_features (connectedRegions, ImageS, 'mean', mean_s)</l>
+<l>    gray_features (connectedRegions, ImageV, 'mean', mean_v)</l>
+<l>    gray_features (connectedRegions, ImageGray_sc, 'mean', mean_g)</l>
+<c>    </c>
+<l>    gray_features (connectedRegions, ImageH, 'median', median_h)</l>
+<l>    gray_features (connectedRegions, ImageS, 'median', median_s)</l>
+<l>    gray_features (connectedRegions, ImageV, 'median', median_v)</l>
+<l>    gray_features (connectedRegions, ImageGray_sc, 'median', median_g)</l>
+<c>    </c>
+<l>    gray_features (connectedRegions, ImageGrayByte, 'entropy', entropy_g)</l>
+<l>    gray_features (connectedRegions, ImageGrayByte, 'anisotropy', anisotropy_g)</l>
+<c></c>
+<l>    if(|anisotropy_g|==0)</l>
+<l>        continue</l>
+<l>    endif</l>
+<c> </c>
+<l>    tuple_string (anisometry,     'f', anisometry_str)</l>
+<l>    tuple_string (area,           'f', area_str)</l>
+<l>    tuple_string (area_holes,     'f', area_holes_str)</l>
+<l>    tuple_string (bulkiness,      'f', bulkiness_str)</l>
+<l>    tuple_string (circularity,    'f', circularity_str)</l>
+<l>    tuple_string (column,         'f', column_str)</l>
+<l>    tuple_string (column1,        'f', column1_str)</l>
+<l>    tuple_string (column2,        'f', column2_str)</l>
+<l>    tuple_string (compactness,    'f', compactness_str)</l>
+<l>    tuple_string (connect_num,    'f', connect_num_str)</l>
+<l>    tuple_string (contlength,     'f', contlength_str)</l>
+<l>    tuple_string (convexity,      'f', convexity_str)</l>
+<l>    tuple_string (dist_deviation, 'f', dist_deviation_str)</l>
+<l>    tuple_string (dist_mean,      'f', dist_mean_str)</l>
+<l>    tuple_string (euler_number,   'f', euler_number_str)</l>
+<l>    tuple_string (height,         'f', height_str)</l>
+<l>    tuple_string (holes_num,      'f', holes_num_str)</l>
+<l>    tuple_string (inner_height,   'f', inner_height_str)</l>
+<l>    tuple_string (inner_radius,   'f', inner_radius_str)</l>
+<l>    tuple_string (inner_width,    'f', inner_width_str)</l>
+<l>    tuple_string (max_diameter,   'f', max_diameter_str)</l>
+<l>    tuple_string (num_sides,      'f', num_sides_str)</l>
+<l>    tuple_string (orientation,    'f', orientation_str)</l>
+<l>    tuple_string (outer_radius,   'f', outer_radius_str)</l>
+<l>    tuple_string (phi,            'f', phi_str)</l>
+<l>    tuple_string (ra,             'f', ra_str)</l>
+<l>    tuple_string (rb,             'f', rb_str)</l>
+<l>    tuple_string (rect2_len1,     'f', rect2_len1_str)</l>
+<l>    tuple_string (rect2_len2,     'f', rect2_len2_str)</l>
+<l>    tuple_string (rect2_phi,      'f', rect2_phi_str)</l>
+<l>    tuple_string (rectangularity, 'f', rectangularity_str)</l>
+<l>    tuple_string (roundness,      'f', roundness_str)</l>
+<l>    tuple_string (row,            'f', row_str)</l>
+<l>    tuple_string (row1,           'f', row1_str)</l>
+<l>    tuple_string (row2,           'f', row2_str)</l>
+<l>    tuple_string (struct_factor,  'f', struct_factor_str)</l>
+<l>    tuple_string (width,          'f', width_str)</l>
+<l>    tuple_string (bg_mean_h,      'f', bg_mean_h_str)</l>
+<l>    tuple_string (bg_mean_s,      'f', bg_mean_s_str)</l>
+<l>    tuple_string (bg_mean_v,      'f', bg_mean_v_str)</l>
+<l>    tuple_string (bg_mean_g,      'f', bg_mean_g_str)</l>
+<l>    tuple_string (bg_median_h,    'f', bg_median_h_str)</l>
+<l>    tuple_string (bg_median_s,    'f', bg_median_s_str)</l>
+<l>    tuple_string (bg_median_v,    'f', bg_median_v_str)</l>
+<l>    tuple_string (bg_median_g,    'f', bg_median_g_str)</l>
+<l>    tuple_string (mean_h,         'f', mean_h_str)</l>
+<l>    tuple_string (mean_s,         'f', mean_s_str)</l>
+<l>    tuple_string (mean_v,         'f', mean_v_str)</l>
+<l>    tuple_string (mean_g,         'f', mean_g_str)</l>
+<l>    tuple_string (median_h,       'f', median_h_str)</l>
+<l>    tuple_string (median_s,       'f', median_s_str)</l>
+<l>    tuple_string (median_v,       'f', median_v_str)</l>
+<l>    tuple_string (median_g,       'f', median_g_str)</l>
+<l>    tuple_string (entropy_g,      'f', entropy_g_str)</l>
+<l>    tuple_string (anisotropy_g,   'f', anisotropy_g_str) </l>
+<c>    </c>
+<l>    for ind_k:=0 to |anisometry| -1 by 1</l>
+<l>        fwrite_string (FileHandle_anisometry,      ['2 ', anisometry_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_area,            ['2 ', area_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_area_holes,      ['2 ', area_holes_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_bulkiness,       ['2 ', bulkiness_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_circularity,     ['2 ', circularity_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_column,          ['2 ', column_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_column1,         ['2 ', column1_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_column2,         ['2 ', column2_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_compactness,     ['2 ', compactness_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_connect_num,     ['2 ', connect_num_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_contlength,      ['2 ', contlength_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_convexity,       ['2 ', convexity_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_dist_deviation,  ['2 ', dist_deviation_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_dist_mean,       ['2 ', dist_mean_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_euler_number,    ['2 ', euler_number_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_height,          ['2 ', height_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_holes_num,       ['2 ', holes_num_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_inner_height,    ['2 ', inner_height_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_inner_radius,    ['2 ', inner_radius_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_inner_width,     ['2 ', inner_width_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_max_diameter,    ['2 ', max_diameter_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_num_sides,       ['2 ', num_sides_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_orientation,     ['2 ', orientation_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_outer_radius,    ['2 ', outer_radius_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_phi,             ['2 ', phi_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_ra,              ['2 ', ra_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_rb,              ['2 ', rb_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_rect2_len1,      ['2 ', rect2_len1_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_rect2_len2,      ['2 ', rect2_len2_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_rect2_phi,       ['2 ', rect2_phi_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_rectangularity,  ['2 ', rectangularity_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_roundness,       ['2 ', roundness_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_row,             ['2 ', row_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_row1,            ['2 ', row1_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_row2,            ['2 ', row2_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_struct_factor,   ['2 ', struct_factor_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_width,           ['2 ', width_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_bg_mean_h,       ['2 ', bg_mean_h_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_bg_mean_s,       ['2 ', bg_mean_s_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_bg_mean_v,       ['2 ', bg_mean_v_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_bg_mean_g,       ['2 ', bg_mean_g_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_bg_median_h,     ['2 ', bg_median_h_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_bg_median_s,     ['2 ', bg_median_s_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_bg_median_v,     ['2 ', bg_median_v_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_bg_median_g,     ['2 ', bg_median_g_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_mean_h,          ['2 ', mean_h_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_mean_s,          ['2 ', mean_s_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_mean_v,          ['2 ', mean_v_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_mean_g,          ['2 ', mean_g_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_median_h,        ['2 ', median_h_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_median_s,        ['2 ', median_s_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_median_v,        ['2 ', median_v_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_median_g,        ['2 ', median_g_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_entropy_g,       ['2 ', entropy_g_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_anisotropy_g,    ['2 ', anisotropy_g_str[ind_k], '\n'])</l>
+<l>        fwrite_string (FileHandle_filename,        ['2 ', FilesToAnalyse[Index], '\n'])    </l>
+<l>    endfor</l>
+<l>endfor</l>
+<c></c>
+<l>close_file(FileHandle_anisometry)</l>
+<l>close_file(FileHandle_area)</l>
+<l>close_file(FileHandle_area_holes)</l>
+<l>close_file(FileHandle_bulkiness)</l>
+<l>close_file(FileHandle_circularity)</l>
+<l>close_file(FileHandle_column)</l>
+<l>close_file(FileHandle_column1)</l>
+<l>close_file(FileHandle_column2)</l>
+<l>close_file(FileHandle_compactness)</l>
+<l>close_file(FileHandle_connect_num)</l>
+<l>close_file(FileHandle_contlength)</l>
+<l>close_file(FileHandle_convexity)</l>
+<l>close_file(FileHandle_dist_deviation)</l>
+<l>close_file(FileHandle_dist_mean)</l>
+<l>close_file(FileHandle_euler_number)</l>
+<l>close_file(FileHandle_height)</l>
+<l>close_file(FileHandle_holes_num)</l>
+<l>close_file(FileHandle_inner_height)</l>
+<l>close_file(FileHandle_inner_radius)</l>
+<l>close_file(FileHandle_inner_width)</l>
+<l>close_file(FileHandle_max_diameter)</l>
+<l>close_file(FileHandle_num_sides)</l>
+<l>close_file(FileHandle_orientation)</l>
+<l>close_file(FileHandle_outer_radius) </l>
+<l>close_file(FileHandle_phi)</l>
+<l>close_file(FileHandle_ra)</l>
+<l>close_file(FileHandle_rb) </l>
+<l>close_file(FileHandle_rect2_len1)</l>
+<l>close_file(FileHandle_rect2_len2)</l>
+<l>close_file(FileHandle_rect2_phi)</l>
+<l>close_file(FileHandle_rectangularity)</l>
+<l>close_file(FileHandle_roundness)</l>
+<l>close_file(FileHandle_row)</l>
+<l>close_file(FileHandle_row1) </l>
+<l>close_file(FileHandle_row2)</l>
+<l>close_file(FileHandle_struct_factor)</l>
+<l>close_file(FileHandle_width)</l>
+<l>close_file(FileHandle_bg_mean_h)</l>
+<l>close_file(FileHandle_bg_mean_s)</l>
+<l>close_file(FileHandle_bg_mean_v)</l>
+<l>close_file(FileHandle_bg_mean_g)</l>
+<l>close_file(FileHandle_bg_median_h)</l>
+<l>close_file(FileHandle_bg_median_s)</l>
+<l>close_file(FileHandle_bg_median_v)</l>
+<l>close_file(FileHandle_bg_median_g)</l>
+<l>close_file(FileHandle_mean_h)</l>
+<l>close_file(FileHandle_mean_s)</l>
+<l>close_file(FileHandle_mean_v)</l>
+<l>close_file(FileHandle_mean_g)</l>
+<l>close_file(FileHandle_median_h)</l>
+<l>close_file(FileHandle_median_s)</l>
+<l>close_file(FileHandle_median_v)</l>
+<l>close_file(FileHandle_median_g)</l>
+<l>close_file(FileHandle_entropy_g)</l>
+<l>close_file(FileHandle_anisotropy_g)</l>
+<l>close_file(FileHandle_filename)</l>
+<l>return ()</l>
+<c></c>
+</body>
+<docu id="analyseImagesInDir">
+<parameters>
+<parameter id="ImageBG"/>
+<parameter id="p_area_cutoff"/>
+<parameter id="p_bilateral_range"/>
+<parameter id="p_bilateral_spatial"/>
+<parameter id="p_canny_alpha"/>
+<parameter id="p_canny_high"/>
+<parameter id="p_canny_low"/>
+<parameter id="p_close_edges_max_gap"/>
+<parameter id="p_close_edges_min_amp"/>
+<parameter id="p_conduct_erosion_dilation"/>
+<parameter id="p_delay"/>
+<parameter id="p_dilation"/>
+<parameter id="p_displayResults"/>
+<parameter id="p_erosion"/>
+<parameter id="p_inputDirectory">
+<sem_type>string</sem_type>
+</parameter>
+<parameter id="p_outputDirectory"/>
+<parameter id="p_startIndex"/>
+</parameters>
+</docu>
+</procedure>
+</hdevelop>
